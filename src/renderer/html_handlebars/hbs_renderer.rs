@@ -825,7 +825,28 @@ fn add_playground_pre(
             let classes = &caps[2];
             let code = &caps[3];
 
-            if classes.contains("language-rust") {
+            if classes.contains("language-sug") {
+                // wrap the contents in an external pre block
+                format!(
+                    "<pre class=\"playground-sug\"><code class=\"{}\">{}</code></pre>",
+                    classes,
+                    {
+                        let content: Cow<'_, str> = if playground_config.editable
+                            && classes.contains("editable")
+                            || text.contains("fn main")
+                            || text.contains("quick_main!")
+                        {
+                            code.into()
+                        } else {
+                            // we need to inject our own main
+                            let (attrs, code) = partition_source(code);
+
+                            format!("\n{}#fn main() {{\n{}#}}", attrs, code).into()
+                        };
+                        hide_lines(&content)
+                    }
+                )
+            } else if classes.contains("language-rust") {
                 if (!classes.contains("ignore")
                     && !classes.contains("noplayground")
                     && !classes.contains("noplaypen"))
